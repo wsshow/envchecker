@@ -1,0 +1,16 @@
+{
+	"Objs": [
+		{
+			"Name": "node",
+			"Version": "16.16.0",
+			"Url": "https://nodejs.org/dist/v16.16.0/node-v16.16.0.tar.gz",
+			"Command": ""
+		},
+		{
+			"Name": "npm",
+			"Version": "8.11.0",
+			"Url": "",
+			"Command": " npm -g install npm@8.11.0"
+		}
+	]
+}
