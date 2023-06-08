@@ -3,11 +3,9 @@ package dl
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path"
-	"strings"
 	"sync"
 	"time"
 
@@ -18,8 +16,8 @@ import (
 type Downloader struct {
 	concurrency int
 	resume      bool
-
-	bar *progressbar.ProgressBar
+	partDir     string
+	bar         *progressbar.ProgressBar
 }
 
 func NewDownloader(concurrency int, resume bool) *Downloader {
@@ -43,15 +41,15 @@ func (d *Downloader) Download(strURL, filename string) error {
 	return d.singleDownload(strURL, filename)
 }
 
-func (d *Downloader) multiDownload(strURL, filename string, contentLen int) error {
+func (d *Downloader) multiDownload(strURL, filename string, contentLen int) (err error) {
 	d.setBar(contentLen)
 
 	partSize := contentLen / d.concurrency
-
-	// 创建部分文件的存放目录
 	partDir := d.getPartDir(filename)
 	os.Mkdir(partDir, 0777)
 	defer os.RemoveAll(partDir)
+
+	d.partDir = partDir
 
 	var wg sync.WaitGroup
 	wg.Add(d.concurrency)
@@ -59,11 +57,13 @@ func (d *Downloader) multiDownload(strURL, filename string, contentLen int) erro
 	rangeStart := 0
 
 	for i := 0; i < d.concurrency; i++ {
+		if err != nil {
+			return
+		}
 		go func(i, rangeStart int) {
 			defer wg.Done()
 
 			rangeEnd := rangeStart + partSize
-			// 最后一部分，总长度不能超过 ContentLength
 			if i == d.concurrency-1 {
 				rangeEnd = contentLen
 			}
@@ -78,7 +78,10 @@ func (d *Downloader) multiDownload(strURL, filename string, contentLen int) erro
 				d.bar.Add(downloaded)
 			}
 
-			d.downloadPartial(strURL, filename, rangeStart+downloaded, rangeEnd, i)
+			err = d.downloadPartial(strURL, filename, rangeStart+downloaded, rangeEnd, i)
+			if err != nil {
+				return
+			}
 
 		}(i, rangeStart)
 
@@ -92,20 +95,20 @@ func (d *Downloader) multiDownload(strURL, filename string, contentLen int) erro
 	return nil
 }
 
-func (d *Downloader) downloadPartial(strURL, filename string, rangeStart, rangeEnd, i int) {
+func (d *Downloader) downloadPartial(strURL, filename string, rangeStart, rangeEnd, i int) error {
 	if rangeStart >= rangeEnd {
-		return
+		return nil
 	}
 
 	req, err := http.NewRequest("GET", strURL, nil)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", rangeStart, rangeEnd))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer resp.Body.Close()
 
@@ -116,7 +119,7 @@ func (d *Downloader) downloadPartial(strURL, filename string, rangeStart, rangeE
 
 	partFile, err := os.OpenFile(d.getPartFilename(filename, i), flags, 0666)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer partFile.Close()
 
@@ -124,10 +127,11 @@ func (d *Downloader) downloadPartial(strURL, filename string, rangeStart, rangeE
 	_, err = io.CopyBuffer(io.MultiWriter(partFile, d.bar), resp.Body, buf)
 	if err != nil {
 		if err == io.EOF {
-			return
+			return nil
 		}
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
 func (d *Downloader) merge(filename string) error {
@@ -151,15 +155,12 @@ func (d *Downloader) merge(filename string) error {
 	return nil
 }
 
-// getPartDir 部分文件存放的目录
 func (d *Downloader) getPartDir(filename string) string {
-	return strings.SplitN(filename, ".", 2)[0]
+	return fmt.Sprintf("%s_%s", filename, time.Now().Format("20060102150405"))
 }
 
-// getPartFilename 构造部分文件的名字
 func (d *Downloader) getPartFilename(filename string, partNum int) string {
-	partDir := d.getPartDir(filename)
-	return fmt.Sprintf("%s/%s-%d", partDir, filename, partNum)
+	return fmt.Sprintf("%s/%s-%d", d.partDir, filename, partNum)
 }
 
 func (d *Downloader) singleDownload(strURL, filename string) error {
