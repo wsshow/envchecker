@@ -3,38 +3,17 @@ package cmd
 import (
 	"envchecker/config"
 	"envchecker/g"
-	"envchecker/pkg/dl"
-	"envchecker/pkg/pterm"
 	"envchecker/utils"
-	"fmt"
 	"os"
 
 	"github.com/urfave/cli/v2"
 )
 
-func downloader() *cli.Command {
-	return &cli.Command{
-		Name:    "downloader",
-		Aliases: []string{"dl"},
-		Action: func(ctx *cli.Context) error {
-			urls := ctx.Args().Slice()
-			if len(urls) == 0 {
-				pterm.Info("The current download list is empty")
-				return nil
-			}
-			if pterm.Confirm("Whether to start downloading") {
-				err := dl.BatchDownload(urls)
-				if err != nil {
-					pterm.Error(fmt.Sprintf("download failed: %s", err.Error()))
-				}
-			}
-			return nil
-		},
-	}
-}
-
 func app() *cli.App {
 	var confPath string
+	var commands []*cli.Command
+	commands = append(commands, cliDownloader())
+	commands = append(commands, cliArchiver()...)
 	app := &cli.App{
 		Name: "envchecker",
 		Authors: []*cli.Author{
@@ -53,7 +32,7 @@ func app() *cli.App {
 				Destination: &confPath,
 			},
 		},
-		Commands: []*cli.Command{downloader()},
+		Commands: commands,
 		Action: func(*cli.Context) error {
 			if utils.IsPathExist(confPath) {
 				c, err := config.From(confPath)
