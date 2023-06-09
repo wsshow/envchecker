@@ -85,14 +85,18 @@ func (c *Config) Check() error {
 func Init() error {
 	c := Config{
 		[]CheckObj{
-			{Name: "node",
+			{
+				Name:          "node",
 				GetVersion:    "node -v",
 				ExpectVersion: "16.16.0",
-				Url:           "https://nodejs.org/dist/v16.16.0/node-v16.16.0.tar.gz"},
-			{Name: "npm",
+				Url:           "https://nodejs.org/dist/v16.16.0/node-v16.16.0.tar.gz",
+			},
+			{
+				Name:          "npm",
 				GetVersion:    "npm -v",
 				ExpectVersion: "8.11.0",
-				Steps:         []string{"npm -g install npm@8.11.0"}},
+				Steps:         []string{"npm -g install npm@8.11.0"},
+			},
 		},
 	}
 	return To(&c, "envchecker.json")
