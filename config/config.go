@@ -2,18 +2,21 @@ package config
 
 import (
 	"encoding/json"
+	"envchecker/pkg/dl"
 	"envchecker/pkg/pterm"
 	"envchecker/utils"
 	"fmt"
+	"strings"
 
 	"github.com/samber/lo"
 )
 
 type CheckObj struct {
-	Name    string
-	Version string
-	Url     string
-	Command string
+	Name          string
+	GetVersion    string
+	ExpectVersion string
+	Url           string
+	Steps         []string
 }
 
 type Config struct {
@@ -31,26 +34,50 @@ func (c *Config) Check() error {
 		if !lo.Contains(names, obj.Name) {
 			continue
 		}
-		s, err := utils.Cmd("powershell", fmt.Sprintf("Get-Command -Name %s -ErrorAction SilentlyContinue", obj.Name))
+		execPath, err := utils.FindExecPath(obj.Name)
+		if err != nil || len(execPath) == 0 {
+			pterm.Warning(fmt.Sprintf("not found %s", obj.Name))
+			if pterm.Confirm(fmt.Sprintf("Whether to download %s", obj.Name)) {
+				if !strings.HasPrefix(obj.Url, "http") {
+					pterm.Warning(fmt.Sprintf("not found valid url, current: %s", obj.Url))
+					continue
+				}
+				err = dl.SingleDownload(obj.Url)
+				if err != nil {
+					pterm.Error(fmt.Sprintf("%s download failed", obj.Name))
+				}
+			}
+			continue
+		}
+		pterm.Info(obj.Name, "check...")
+		ss := strings.Split(obj.GetVersion, " ")
+		if len(ss) < 2 || ss[0] != obj.Name {
+			pterm.Error(fmt.Sprintf("config GetVersion %s name not match with config name %s", obj.GetVersion, obj.Name))
+			continue
+		}
+		currentVersion, err := utils.Cmd(obj.Name, ss[1:]...)
 		if err != nil {
 			return err
 		}
-		if len(s) > 0 {
-			pterm.Info(obj.Name, "check...")
-			currentVersion, err := utils.Cmd(obj.Name, "-v")
-			if err != nil {
-				return err
+		expectVersion := obj.ExpectVersion
+		if strings.Contains(currentVersion, expectVersion) {
+			pterm.Success(fmt.Sprintf("current version is %s, which meets requirements", currentVersion))
+			continue
+		} else {
+			pterm.Warning(fmt.Sprintf("current verison: %s, expect version: %s", currentVersion, expectVersion))
+			if pterm.Confirm(fmt.Sprintf("Whether to download %s", obj.Name)) {
+				if !strings.HasPrefix(obj.Url, "http") {
+					pterm.Warning(fmt.Sprintf("not found valid url, current: %s", obj.Url))
+					continue
+				}
+				err = dl.SingleDownload(obj.Url)
+				if err != nil {
+					pterm.Error(fmt.Sprintf("%s download failed", obj.Name))
+				}
 			}
-			currentVersion = utils.TrimUntilNum(currentVersion)
-			expectVersion := obj.Version
-			if expectVersion != currentVersion {
-				pterm.Warning(fmt.Sprintf("current verison: %s, expect version: %s", currentVersion, expectVersion))
-				continue
-			} else {
-				pterm.Success(fmt.Sprintf("current version is %s, which meets requirements", currentVersion))
-				continue
-			}
+			continue
 		}
+
 	}
 	return nil
 }
@@ -58,8 +85,14 @@ func (c *Config) Check() error {
 func Init() error {
 	c := Config{
 		[]CheckObj{
-			{Name: "node", Version: "16.16.0", Url: "https://nodejs.org/dist/v16.16.0/node-v16.16.0.tar.gz"},
-			{Name: "npm", Version: "8.11.0", Command: " npm -g install npm@8.11.0"},
+			{Name: "node",
+				GetVersion:    "node -v",
+				ExpectVersion: "16.16.0",
+				Url:           "https://nodejs.org/dist/v16.16.0/node-v16.16.0.tar.gz"},
+			{Name: "npm",
+				GetVersion:    "npm -v",
+				ExpectVersion: "8.11.0",
+				Steps:         []string{"npm -g install npm@8.11.0"}},
 		},
 	}
 	return To(&c, "envchecker.json")

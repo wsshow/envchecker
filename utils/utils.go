@@ -3,11 +3,13 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"hash/crc32"
 	"io"
 	"net"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -119,4 +121,13 @@ func GetFilenameFromUrl(url string) string {
 		return url
 	}
 	return url[index+1:]
+}
+
+func FindExecPath(name string) (execPath string, err error) {
+	if runtime.GOOS == "windows" {
+		execPath, err = Cmd("powershell", fmt.Sprintf("Get-Command -Name %s -ErrorAction SilentlyContinue", name))
+	} else {
+		execPath, err = Cmd("/bin/bash", fmt.Sprintf("which %s", name))
+	}
+	return
 }

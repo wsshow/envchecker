@@ -5,9 +5,18 @@ import (
 	"runtime"
 )
 
-func Run(urls []string) {
+func BatchDownload(urls []string) error {
 	ndl := NewDownloader(runtime.NumCPU(), false)
 	for _, url := range urls {
-		ndl.Download(url, utils.GetFilenameFromUrl(url))
+		err := ndl.Download(url, utils.GetFilenameFromUrl(url))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
+}
+
+func SingleDownload(url string) error {
+	ndl := NewDownloader(runtime.NumCPU(), false)
+	return ndl.Download(url, utils.GetFilenameFromUrl(url))
 }

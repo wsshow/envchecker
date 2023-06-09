@@ -6,6 +6,7 @@ import (
 	"envchecker/pkg/dl"
 	"envchecker/pkg/pterm"
 	"envchecker/utils"
+	"fmt"
 	"os"
 
 	"github.com/urfave/cli/v2"
@@ -22,7 +23,10 @@ func downloader() *cli.Command {
 				return nil
 			}
 			if pterm.Confirm("Whether to start downloading") {
-				dl.Run(urls)
+				err := dl.BatchDownload(urls)
+				if err != nil {
+					pterm.Error(fmt.Sprintf("download failed: %s", err.Error()))
+				}
 			}
 			return nil
 		},

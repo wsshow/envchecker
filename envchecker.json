@@ -2,15 +2,40 @@
 	"Objs": [
 		{
 			"Name": "node",
-			"Version": "16.16.0",
+			"GetVersion": "node -v",
+			"ExpectVersion": "16.16.0",
 			"Url": "https://nodejs.org/dist/v16.16.0/node-v16.16.0.tar.gz",
-			"Command": ""
+			"Steps": []
 		},
 		{
 			"Name": "npm",
-			"Version": "8.11.0",
-			"Url": "",
-			"Command": " npm -g install npm@8.11.0"
+			"GetVersion": "npm -v",
+			"ExpectVersion": "8.11.0",
+			"Url": "-",
+			"Steps": [
+				"npm -g install npm@8.11.0"
+			]
+		},
+		{
+			"Name": "flashrom",
+			"GetVersion": "-",
+			"ExpectVersion": "-",
+			"Url": "https://github.com/flashrom/flashrom/archive/refs/tags/v1.3.0.zip",
+			"Steps": []
+		},
+		{
+			"Name": "go",
+			"GetVersion": "go version",
+			"ExpectVersion": "1.20",
+			"Url": "https://studygolang.com/dl/golang/go1.20.4.src.tar.gz",
+			"Steps": []
+		},
+		{
+			"Name": "git",
+			"GetVersion": "git --version",
+			"ExpectVersion": "2.33.0",
+			"Url": "https://github.com/git/git/archive/refs/tags/v2.41.0.zip",
+			"Steps": []
 		}
 	]
 }
