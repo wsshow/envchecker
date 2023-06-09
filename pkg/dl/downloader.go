@@ -192,6 +192,9 @@ func (d *Downloader) setBar(length int) {
 		progressbar.OptionSetWidth(50),
 		progressbar.OptionThrottle(time.Millisecond),
 		progressbar.OptionSetDescription("downloading..."),
+		progressbar.OptionOnCompletion(func() {
+			fmt.Println()
+		}),
 		progressbar.OptionSetTheme(progressbar.Theme{
 			Saucer:        "[green]=[reset]",
 			SaucerHead:    "[green]>[reset]",
