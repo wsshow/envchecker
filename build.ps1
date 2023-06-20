@@ -1,4 +1,8 @@
 $name = "envchecker"
+$version = "0.0.1"
+$buildTime = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+$ldFlags = "-s -w -X '$Name/version.version=$version' -X '$Name/version.buildTime=$buildTime'"
+
 $arrOS = "linux", "windows", "android"
 $arrARCH = "386", "amd64", "arm", "arm64", "riscv", "riscv64"
 Write-Host "=========================================="
@@ -30,11 +34,11 @@ $env:GOARCH = $arch
 
 $output = ".\app\$os\$name-$os-$arch"
 if ($os -eq "linux") {
-    go build -ldflags "-s -w" -o $output .\main.go
+    go build -ldflags $ldFlags -o $output .\main.go
 }
 if ($os -eq "windows") {
     $exePath = "$output.exe"
-    go build  -ldflags "-s -w" -o $exePath .\main.go
+    go build  -ldflags $ldFlags -o $exePath .\main.go
 }
 
 Write-Host "build had finished, output:$output" -ForegroundColor:Green
