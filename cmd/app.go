@@ -4,6 +4,7 @@ import (
 	"envchecker/config"
 	"envchecker/g"
 	"envchecker/utils"
+	"envchecker/version"
 	"os"
 
 	"github.com/urfave/cli/v2"
@@ -21,8 +22,9 @@ func app() *cli.App {
 				Name: "ws",
 			},
 		},
-		Version: "0.0.1",
-		Usage:   "detect the necessary dependencies in the system environment",
+		Version:     version.Get().Version,
+		Description: version.Get().String(),
+		Usage:       "detect the necessary dependencies in the system environment",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "config",
