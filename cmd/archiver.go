@@ -62,11 +62,14 @@ func decompress() *cli.Command {
 				Name:        "dst",
 				Aliases:     []string{"d"},
 				Usage:       "the path of the decompressed folder",
-				Value:       "./",
 				Destination: &dstPath,
 			},
 		},
 		Action: func(ctx *cli.Context) error {
+			if len(dstPath) == 0 {
+				dstPath = utils.GetFilename(srcPath)
+			}
+			utils.NotExistToMkdir(dstPath)
 			if err := archiver.Decompress(srcPath, dstPath); err != nil {
 				pterm.Error(fmt.Sprintf("decompress error: %s", err.Error()))
 			}

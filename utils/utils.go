@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path"
 	"runtime"
 	"strconv"
 	"strings"
@@ -130,4 +131,11 @@ func FindExecPath(name string) (execPath string, err error) {
 		execPath, err = Cmd("/bin/bash", fmt.Sprintf("which %s", name))
 	}
 	return
+}
+
+func GetFilename(filePath string) string {
+	fileName := path.Base(filePath)
+	fileExt := path.Ext(fileName)
+	onlyFileName := strings.TrimSuffix(fileName, fileExt)
+	return onlyFileName
 }
