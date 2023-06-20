@@ -18,7 +18,7 @@ func compress() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "src",
-				Aliases:     []string{"c"},
+				Aliases:     []string{"s"},
 				Usage:       "the path to be compressed",
 				Required:    true,
 				Destination: &srcPath,
@@ -53,7 +53,7 @@ func decompress() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "src",
-				Aliases:     []string{"c"},
+				Aliases:     []string{"s"},
 				Usage:       "the path of the file to be decompressed",
 				Required:    true,
 				Destination: &srcPath,
