@@ -15,9 +15,6 @@ builds:
       - '386'
       - arm
       - arm64
-      - riscv
-      - riscv64
-      - mips64
 
 archives:
   - format: zip
