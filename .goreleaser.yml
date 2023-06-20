@@ -6,16 +6,6 @@ builds:
       - CGO_ENABLED=0
     main: .
     ldflags: -s -w
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - '386'
-      - arm
-      - arm64
-
 archives:
   - format: zip
     name_template: >-
